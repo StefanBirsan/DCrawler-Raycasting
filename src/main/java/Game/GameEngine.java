@@ -1,5 +1,8 @@
 package Game;
 
+import javafx.util.Pair;
+import javafx.geometry.Point2D;
+
 import java.awt.*;
 import javax.swing.*;
 import java.awt.event.KeyEvent;
@@ -7,11 +10,17 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
+import java.util.Hashtable;
+import java.util.LinkedList;
 
 public class GameEngine extends JFrame implements KeyListener, MouseMotionListener {
     private int resX = 800, resY = 600;
     private double playerX = 22, playerY = 12;
     private double playerDir = -1, playerPlaneX = 0, playerPlaneY = 0.66;
+
+    private LinkedList<int[][]> maps = new LinkedList<>();
+    private static Hashtable<Integer, Pair<Double, Double>> wallHeight = new Hashtable<>();
 
     public GameEngine() {
         setTitle("Raycasting Game");
@@ -21,6 +30,7 @@ public class GameEngine extends JFrame implements KeyListener, MouseMotionListen
         setFocusable(true);
         addKeyListener(this);
         addMouseMotionListener(this);
+        initWallHeight();
     }
 
     public void start() {
@@ -126,6 +136,42 @@ public class GameEngine extends JFrame implements KeyListener, MouseMotionListen
             g.setColor(color);
             g.drawLine(x, drawStart, x, drawEnd);
         }
+    }
+
+    private void initWallHeight() {
+        wallHeight.put(0, new Pair<>(0d, 0d));
+
+        for (int i = 1; i < 5; i++)
+            wallHeight.put(i, new Pair<>(1d, 0d));
+
+        wallHeight.put(5, new Pair<>(.3, .7));
+        wallHeight.put(6, new Pair<>(.6, .4));
+    }
+
+    public static Hashtable<Integer, Pair<Double, Double>> getWallHeight() {
+        return wallHeight;
+    }
+
+    public String[] getHighscores() {
+        return new String[0];
+    }
+
+    private void initMaps() {
+        maps.add(new int[][]{{1,1,1,1,1,1,1,1,2,2,2,2,2,2,2},
+                {1,0,0,0,0,0,0,0,2,0,0,0,0,0,2},
+                {1,0,3,3,3,3,3,0,0,0,0,0,0,0,2},
+                {1,0,3,5,0,6,3,0,2,0,0,0,0,0,2},
+                {1,0,3,0,0,0,3,0,2,2,2,0,2,2,2},
+                {1,0,3,0,0,0,3,0,2,0,0,0,0,0,2},
+                {1,0,3,3,0,3,3,0,2,0,0,0,0,0,2},
+                {1,0,0,0,0,0,0,0,2,0,0,0,0,0,2},
+                {1,1,1,1,1,1,1,1,4,4,4,0,4,4,4},
+                {1,0,0,0,0,0,1,4,0,0,0,0,0,0,4},
+                {1,0,0,0,0,0,1,4,0,0,0,0,0,0,4},
+                {1,0,0,0,0,0,1,4,0,3,3,3,3,0,4},
+                {1,0,0,0,0,0,1,4,0,3,3,3,3,0,4},
+                {1,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
+                {1,1,1,1,1,1,1,4,4,4,4,4,4,4,4}});
     }
 
     @Override
