@@ -1,6 +1,7 @@
 package Player;
 
 import Game.GameEngine;
+import Player.Helper.RenderVect;
 import javafx.geometry.Point2D;
 import javafx.util.Pair;
 
@@ -76,35 +77,35 @@ public class Character {
         return maxMana;
     }
 
-    void turn(double angle) {
+    public void turn(double angle) {
         double sin = Math.sin(angle), cos = Math.cos(angle);
-        dir = new Mtx2x2(cos, -sin, sin, cos).apply(dir);
+        dir = new RenderVect(cos, -sin, sin, cos).apply(dir);
     }
 
-    void attack() {
+    public void attack() {
         if (deltaWeaponAngle != -.2) {
             deltaWeaponAngle = -.2;
             Audio.resetAndStart(Audio.Sound.SWORD);
         }
     }
 
-    void forward() {
+    public void forward() {
         dirs.add(dir);
     }
 
-    void backward() {
-        dirs.add(new Mtx2x2(-1, 0, 0, -1).apply(dir));
+    public void backward() {
+        dirs.add(new RenderVect(-1, 0, 0, -1).apply(dir));
     }
 
-    void left() {
-        dirs.add(new Mtx2x2(0, -1, 1, 0).apply(dir));
+    public void left() {
+        dirs.add(new RenderVect(0, -1, 1, 0).apply(dir));
     }
 
-    void right() {
-        dirs.add(new Mtx2x2(0, 1, -1, 0).apply(dir));
+    public void right() {
+        dirs.add(new RenderVect(0, 1, -1, 0).apply(dir));
     }
 
-    void sprint() {
+    public void sprint() {
         if (stamina > 0) {
             currentSpeed = sprintSpeed;
             stamina -= 2;
@@ -122,11 +123,11 @@ public class Character {
         }
     }
 
-    LinkedList<Pair<Pair<Point2D, Boolean>, Point2D>> collisionInfo(Point2D vec) {
-        boolean found = true;       // better to init this with fake value than check if closer == null in inner while
+    public LinkedList<Pair<Pair<Point2D, Boolean>, Point2D>> collisionInfo(Point2D vec) {
+        boolean found = true;
         double tg = vec.getY() / vec.getX(), diffY = Math.abs(tg) * Math.signum(vec.getY()), diffX = 1 / Math.abs(tg) * Math.signum(vec.getX()),
                 x = vec.getX() < 0 ? Math.floor(pos.getX()) : Math.ceil(pos.getX()), y = vec.getY() < 0 ? Math.floor(pos.getY()) : Math.ceil(pos.getY()),
-                lastHeight = 0, distSquaredX = 0, distSquaredY = 0;     // same as with bool found
+                lastHeight = 0, distSquaredX = 0, distSquaredY = 0;
         Point2D closer = null, px = new Point2D(x, (x - pos.getX()) * tg + pos.getY()), py = new Point2D((y - pos.getY()) / tg + pos.getX(), y),
                 dPx = new Point2D(vec.getX() < 0 ? -1 : 1, diffY), dPy = new Point2D(diffX, vec.getY() < 0 ? -1 : 1);
         LinkedList<Pair<Pair<Point2D, Boolean>, Point2D>> list = new LinkedList<>();

@@ -11,14 +11,14 @@ public class Player extends Character  {
         super(speed, sprintSpeed, health, mana, stamina, maxHealth, maxMana, maxStamina, pos, dir);
     }
 
-    void update() {
+    public void update() {
         super.update();
 
         if (deltaFov != 0)
             updateFov();
     }
 
-    void lookVertical(double delta) {
+    public void lookVertical(double delta) {
         zDir += delta;
         zDir = zDir < -2 ? -2 : zDir > 2 ? 2 : zDir;
     }
@@ -47,7 +47,7 @@ public class Player extends Character  {
         return zDir;
     }
 
-    void aim() {
+    public void aim() {
         deltaFov = fov == defaultFov ? -0.035 : fov == aimFov ? 0.035 : deltaFov;
     }
 }

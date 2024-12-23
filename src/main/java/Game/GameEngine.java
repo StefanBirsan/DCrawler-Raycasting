@@ -1,5 +1,9 @@
 package Game;
 
+import Game.Menus.Serialization;
+import Game.Menus.SettingHelper.Settings;
+import Player.CameraView;
+import Player.Player;
 import javafx.util.Pair;
 import javafx.geometry.Point2D;
 
@@ -15,22 +19,64 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 
 public class GameEngine extends JFrame implements KeyListener, MouseMotionListener {
-    private int resX = 800, resY = 600;
-    private double playerX = 22, playerY = 12;
-    private double playerDir = -1, playerPlaneX = 0, playerPlaneY = 0.66;
+    enum State {
+        MENU, GAME, PAUSE
+    }
+
+    private int resX, resY, renderedResX, renderedResY, fps = 60, msPerFrame = 1000 / fps;
+    private int level, difficulty;
+
+    private CameraView camera;
+    private Player player;
+    private InputListener input;
+    private Menu menu;
+    private State state = State.MENU;
+    private Serialization settingsSerialization = new Serialization("settings.ser", Settings.class);
+    private Settings settings;
 
     private LinkedList<int[][]> maps = new LinkedList<>();
+
     private static Hashtable<Integer, Pair<Double, Double>> wallHeight = new Hashtable<>();
 
     public GameEngine() {
         setTitle("Raycasting Game");
-        setSize(resX, resY);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setResizable(false);
         setFocusable(true);
-        addKeyListener(this);
-        addMouseMotionListener(this);
+        setResizable(false);
+
+        Menu.initHashSets();
+        Menu.initModeStack();
+
+        try {
+            readSettings();
+            Audio.init();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        getContentPane().setPreferredSize(new Dimension(resX, resY));
+
+        Textures.init();
+        initMaps();
         initWallHeight();
+        getContentPane().setCursor(Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TRANSLUCENT),
+                new Point(0, 0), "blank"));
+
+        menu = new Menu(); //TODO: add settings later if needed
+        getContentPane().add((PopupMenu) menu); //TODO: debyg later if needed
+
+        if (settings.isFullscreen()) {
+            setUndecorated(true);
+            setExtendedState(MAXIMIZED_BOTH);
+        }
+
+        pack();
+        setLocationRelativeTo(null);
+        setVisible(true);
+
+        Audio.resetAndStart(Audio.Sound.MENU);
+        run();
     }
 
     public void start() {
@@ -233,4 +279,119 @@ public class GameEngine extends JFrame implements KeyListener, MouseMotionListen
             ex.printStackTrace();
         }
     }
+
+    void applySettings(Menu.Mode mode) {
+        if (mode == Menu.Mode.GRAPHICS) {
+            if (settings.isFullscreen()) {
+                Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+                resX = d.width;
+                settings.setResX(resX);
+                resY = d.height;
+                settings.setResY(resY);
+            }
+            else {
+                resX = settings.getResX();
+                resY = settings.getResY();
+            }
+
+            renderedResX = settings.getRenderResX();
+            renderedResY = settings.getRenderResY();
+        }
+    }
+
+    void refresh() {
+        remove(menu);
+        menu = new Menu(menu.isFullscreen(), this, settings, settingsSerialization);
+        add(menu);
+        validate();
+
+        if (state == State.PAUSE)
+            camera = new Camera(resX, resY, renderedResX, renderedResY, hero, maps.get(level), NPCs);
+
+        setSize(resX, resY);
+    }
+
+    private void readSettings() throws Exception {
+        settings = (Settings) settingsSerialization.deserialize();
+
+        for (Menu.Mode mode : Menu.getSettings())
+            applySettings(mode);
+    }
+
+    void pause() {
+        Audio.stop(Audio.Sound.BG);
+        Audio.resetAndStart(Audio.Sound.MENU);
+        state = State.PAUSE;
+        getContentPane().remove(camera);
+        menu.pause();
+        getContentPane().add(menu);
+        getContentPane().validate();
+    }
+
+    void resume() {
+        Audio.stop(Audio.Sound.MENU);
+        Audio.resetAndStart(Audio.Sound.BG);
+        state = State.GAME;
+        removeKeyListener(menu.getInput());
+        input.resume(System.currentTimeMillis());
+        getContentPane().remove(menu);
+        getContentPane().add(camera);
+        getContentPane().validate();
+    }
+
+    void restart() {
+        newGame();
+    }
+
+    void newGame() {
+        int[][] map = maps.get(level);
+
+        Character.setMap(map);
+        initNPCs();
+        Weapon.initWeapons();
+
+        hero = new Hero(0.03, 0.06, 100, 100, 100, 100, 100, 100, new Point2D(4.5, 4.5),
+                new Point2D(0, 1), new LinkedList<>());
+
+        input = new InputListener(this, player);
+        addMouseListener(input);
+        addKeyListener(input);
+
+        camera = new CameraView(resX, resY, renderedResX, renderedResY, hero, map, NPCs);
+
+        resume();
+    }
+
+    void newGame(int level, int difficulty) {
+        this.level = level;
+        this.difficulty = difficulty;
+        newGame();
+    }
+
+    private void run() {
+        while (true) {
+            long time = System.currentTimeMillis();
+
+            if (state != State.GAME)
+                menu.update();
+            else {
+                input.update();
+                player.update();
+            }
+
+            Sprite.update();
+            repaint();
+
+            try {
+                Thread.sleep(msPerFrame - (System.currentTimeMillis() - time));
+            } catch (Exception e) { }
+        }
+    }
+
+    void exit() {
+        System.exit(0);
+    }
+
+
+
 }
