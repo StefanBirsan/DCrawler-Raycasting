@@ -21,7 +21,7 @@ public class Serialization {
         fileOut.close();
     }
 
-    Object deserialize() throws Exception {
+    public Object deserialize() throws Exception {
         File file = new File(filename);
 
         if (!file.exists()) {

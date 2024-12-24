@@ -2,6 +2,12 @@ package Game;
 
 import Game.Menus.Serialization;
 import Game.Menus.SettingHelper.Settings;
+import Game.Menus.Menu;
+import Game.Texture.Sprite;
+import Game.Texture.Textures;
+import Game.Equipment.Weapon;
+import NPCs.NPC;
+import Player.Character;
 import Player.CameraView;
 import Player.Player;
 import javafx.util.Pair;
@@ -9,17 +15,16 @@ import javafx.geometry.Point2D;
 
 import java.awt.*;
 import javax.swing.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
-import java.awt.image.BufferStrategy;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.util.Hashtable;
 import java.util.LinkedList;
+import java.util.Random;
 
-public class GameEngine extends JFrame implements KeyListener, MouseMotionListener {
-    enum State {
+public class GameEngine extends JFrame  {
+
+    public enum State {
         MENU, GAME, PAUSE
     }
 
@@ -33,6 +38,7 @@ public class GameEngine extends JFrame implements KeyListener, MouseMotionListen
     private State state = State.MENU;
     private Serialization settingsSerialization = new Serialization("settings.ser", Settings.class);
     private Settings settings;
+    private LinkedList<NPC> NPCs = new LinkedList<>();
 
     private LinkedList<int[][]> maps = new LinkedList<>();
 
@@ -63,8 +69,8 @@ public class GameEngine extends JFrame implements KeyListener, MouseMotionListen
         getContentPane().setCursor(Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TRANSLUCENT),
                 new Point(0, 0), "blank"));
 
-        menu = new Menu(); //TODO: add settings later if needed
-        getContentPane().add((PopupMenu) menu); //TODO: debyg later if needed
+        menu = new Menu(settings.isFullscreen(), this, settings, settingsSerialization);
+        getContentPane().add(menu); //TODO: debyg later if needed
 
         if (settings.isFullscreen()) {
             setUndecorated(true);
@@ -77,111 +83,6 @@ public class GameEngine extends JFrame implements KeyListener, MouseMotionListen
 
         Audio.resetAndStart(Audio.Sound.MENU);
         run();
-    }
-
-    public void start() {
-        setVisible(true);
-        createBufferStrategy(3);
-        gameLoop();
-    }
-
-    private void gameLoop() {
-        while (true) {
-            render();
-            try {
-                Thread.sleep(16);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void render() {
-        BufferStrategy bs = getBufferStrategy();
-        if (bs == null) {
-            createBufferStrategy(3);
-            return;
-        }
-        Graphics g = bs.getDrawGraphics();
-        g.setColor(Color.BLACK);
-        g.fillRect(0, 0, resX, resY);
-        renderScene(g);
-        g.dispose();
-        bs.show();
-    }
-
-    private void renderScene(Graphics g) {
-        for (int x = 0; x < resX; x++) {
-            double cameraX = 2 * x / (double) resX - 1;
-            double rayDirX = playerDir + playerPlaneX * cameraX;
-            double rayDirY = playerPlaneY * cameraX;
-
-            //kap position
-            int mapX = (int) playerX;
-            int mapY = (int) playerY;
-
-            double sideDistX;
-            double sideDistY;
-
-            double deltaDistX = Math.abs(1 / rayDirX);
-            double deltaDistY = Math.abs(1 / rayDirY);
-            double perpWallDist;
-
-            int stepX;
-            int stepY;
-
-            boolean hit = false;
-            int side = 0;
-
-            if (rayDirX < 0) {
-                stepX = -1;
-                sideDistX = (playerX - mapX) * deltaDistX;
-            } else {
-                stepX = 1;
-                sideDistX = (mapX + 1.0 - playerX) * deltaDistX;
-            }
-            if (rayDirY < 0) {
-                stepY = -1;
-                sideDistY = (playerY - mapY) * deltaDistY;
-            } else {
-                stepY = 1;
-                sideDistY = (mapY + 1.0 - playerY) * deltaDistY;
-            }
-
-            while (!hit) {
-                if (sideDistX < sideDistY) {
-                    sideDistX += deltaDistX;
-                    mapX += stepX;
-                    side = 0;
-                } else {
-                    sideDistY += deltaDistY;
-                    mapY += stepY;
-                    side = 1;
-                }
-                //check if the ray has hit a wall
-                if (mapX < 0 || mapY < 0 || mapX >= 24 || mapY >= 24) {
-                    hit = true;
-                }
-            }
-
-            //calculate distance projected on camera direction
-            if (side == 0) perpWallDist = (mapX - playerX + (1 - stepX) / 2) / rayDirX;
-            else perpWallDist = (mapY - playerY + (1 - stepY) / 2) / rayDirY;
-
-            int lineHeight = (int) (resY / perpWallDist);
-
-            int drawStart = -lineHeight / 2 + resY / 2;
-            if (drawStart < 0) drawStart = 0;
-            int drawEnd = lineHeight / 2 + resY / 2;
-            if (drawEnd >= resY) drawEnd = resY - 1;
-
-            Color color;
-            if (side == 0) color = Color.RED;
-            else color = Color.DARK_GRAY;
-
-            g.setColor(color);
-            g.drawLine(x, drawStart, x, drawEnd);
-        }
     }
 
     private void initWallHeight() {
@@ -220,66 +121,6 @@ public class GameEngine extends JFrame implements KeyListener, MouseMotionListen
                 {1,1,1,1,1,1,1,4,4,4,4,4,4,4,4}});
     }
 
-    @Override
-    public void keyTyped(KeyEvent e) {}
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-        double moveSpeed = 0.1;
-        double rotSpeed = 0.05;
-
-        if (e.getKeyCode() == KeyEvent.VK_W) {
-            playerX += playerDir * moveSpeed;
-            playerY += playerPlaneY * moveSpeed;
-        }
-        if (e.getKeyCode() == KeyEvent.VK_S) {
-            playerX -= playerDir * moveSpeed;
-            playerY -= playerPlaneY * moveSpeed;
-        }
-        if (e.getKeyCode() == KeyEvent.VK_A) {
-            playerX -= playerPlaneY * moveSpeed;
-            playerY += playerDir * moveSpeed;
-        }
-        if (e.getKeyCode() == KeyEvent.VK_D) {
-            playerX += playerPlaneY * moveSpeed;
-            playerY -= playerDir * moveSpeed;
-        }
-        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-            double oldDirX = playerDir;
-            playerDir = playerDir * Math.cos(-rotSpeed) - playerPlaneX * Math.sin(-rotSpeed);
-            playerPlaneX = oldDirX * Math.sin(-rotSpeed) + playerPlaneX * Math.cos(-rotSpeed);
-        }
-        if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-            double oldDirX = playerDir;
-            playerDir = playerDir * Math.cos(rotSpeed) - playerPlaneX * Math.sin(rotSpeed);
-            playerPlaneX = oldDirX * Math.sin(rotSpeed) + playerPlaneX * Math.cos(rotSpeed);
-        }
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {}
-
-    @Override
-    public void mouseDragged(MouseEvent e) {}
-
-    @Override
-    public void mouseMoved(MouseEvent e) {
-        int mouseX = e.getX();
-        int centerX = resX / 2;
-        double rotationSpeed = 0.005 * (mouseX - centerX);
-        double oldDirX = playerDir;
-
-        playerDir = playerDir * Math.cos(rotationSpeed) - playerPlaneX * Math.sin(rotationSpeed);
-        playerPlaneX = oldDirX * Math.sin(rotationSpeed) + playerPlaneX * Math.cos(rotationSpeed);
-
-        try {
-            Robot robot = new Robot();
-            robot.mouseMove(centerX, resY / 2);
-        } catch (AWTException ex) {
-            ex.printStackTrace();
-        }
-    }
-
     void applySettings(Menu.Mode mode) {
         if (mode == Menu.Mode.GRAPHICS) {
             if (settings.isFullscreen()) {
@@ -299,14 +140,14 @@ public class GameEngine extends JFrame implements KeyListener, MouseMotionListen
         }
     }
 
-    void refresh() {
+    public void refresh() {
         remove(menu);
         menu = new Menu(menu.isFullscreen(), this, settings, settingsSerialization);
         add(menu);
         validate();
 
         if (state == State.PAUSE)
-            camera = new Camera(resX, resY, renderedResX, renderedResY, hero, maps.get(level), NPCs);
+            camera = new CameraView(resX, resY, renderedResX, renderedResY, player, maps.get(level), NPCs);
 
         setSize(resX, resY);
     }
@@ -324,7 +165,7 @@ public class GameEngine extends JFrame implements KeyListener, MouseMotionListen
         state = State.PAUSE;
         getContentPane().remove(camera);
         menu.pause();
-        getContentPane().add(menu);
+        getContentPane().add((Component) menu);
         getContentPane().validate();
     }
 
@@ -339,30 +180,30 @@ public class GameEngine extends JFrame implements KeyListener, MouseMotionListen
         getContentPane().validate();
     }
 
-    void restart() {
+    public void restart() {
         newGame();
     }
 
-    void newGame() {
+    public void newGame() {
         int[][] map = maps.get(level);
 
         Character.setMap(map);
         initNPCs();
         Weapon.initWeapons();
 
-        hero = new Hero(0.03, 0.06, 100, 100, 100, 100, 100, 100, new Point2D(4.5, 4.5),
+        player = new Player(0.03, 0.06, 100, 100, 100, 100, 100, 100, new Point2D(4.5, 4.5),
                 new Point2D(0, 1), new LinkedList<>());
 
         input = new InputListener(this, player);
-        addMouseListener(input);
-        addKeyListener(input);
+        addMouseListener((MouseListener) input);
+        addKeyListener((KeyListener) input);
 
-        camera = new CameraView(resX, resY, renderedResX, renderedResY, hero, map, NPCs);
+        camera = new CameraView(resX, resY, renderedResX, renderedResY, player, map, NPCs);
 
         resume();
     }
 
-    void newGame(int level, int difficulty) {
+    public void newGame(int level, int difficulty) {
         this.level = level;
         this.difficulty = difficulty;
         newGame();
@@ -388,10 +229,36 @@ public class GameEngine extends JFrame implements KeyListener, MouseMotionListen
         }
     }
 
-    void exit() {
+    public void exit() {
         System.exit(0);
     }
 
+    private void initNPCs() {
+        Random r = new Random();
+        int nrOfEnemies = difficulty + r.nextInt(1) * (r.nextBoolean() ? 1 : -1);       // 1 in r.nextInt(int) is arbitrary
+        int[][] map = maps.get(level);
+        nrOfEnemies = nrOfEnemies < 0 ? 0 : nrOfEnemies;
 
+        for (int i = 0; i < nrOfEnemies; i++) {
+            int x = r.nextInt(map[0].length), y = r.nextInt(map.length);
+            boolean collides = true;
+
+            while (collides) {
+                collides = map[y][x] != 0;
+
+                for (NPC j : NPCs)
+                    if (!collides)
+                        collides = x == (int) j.getPos().getX() && y == (int) j.getPos().getY();
+
+                if (collides) {
+                    x = r.nextInt(map[0].length);
+                    y = r.nextInt(map.length);
+                }
+            }
+
+            NPCs.add(new NPC(0.03, 0.06, 10, 10, 10, 10, 10, 10, new Point2D(x + 0.5, y + 0.5),
+                    new Point2D(0, 1), new LinkedList<>(), NPC.Attitude.EVIL, NPC.NPCs.BALDRIC));
+        }
+    }
 
 }

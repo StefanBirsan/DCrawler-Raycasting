@@ -1,6 +1,7 @@
 package Game;
 
 import Player.Player;
+import Game.GameEngine;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -19,6 +20,8 @@ public class InputListener {
 
     private GameEngine game;
     private Player player;
+    private GameEngine.State state = GameEngine.State.GAME;
+
 
     private Hashtable<Integer, Boolean> mouseKeys = new Hashtable<>();
     private Hashtable<Integer, Boolean> keys = new Hashtable<>();
@@ -57,7 +60,7 @@ public class InputListener {
 
     void resume(long time) {
         this.time = time;
-        state = Game.State.GAME;
+        state = GameEngine.State.GAME;
         robot.mouseMove(mousePos.x, mousePos.y);
     }
 
@@ -66,7 +69,7 @@ public class InputListener {
         updateKeys();
     }
     private void updateMouse() {
-        if (state == Game.State.PAUSE)
+        if (state == GameEngine.State.PAUSE)
             return;
 
         Point oldMousePos = mousePos;
@@ -97,12 +100,12 @@ public class InputListener {
 
             if (newTime - time >= 500) {
                 game.pause();
-                state = Game.State.PAUSE;
+                state = GameEngine.State.PAUSE;
                 time = newTime;
             }
         }
 
-        if (state == Game.State.PAUSE)
+        if (state == GameEngine.State.PAUSE)
             return;
 
         if (mouseKeys.get(MouseEvent.BUTTON1))

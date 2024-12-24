@@ -5,6 +5,7 @@ import Game.Menus.SettingHelper.Settings;
 import javafx.util.Pair;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -19,7 +20,7 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.Stack;
 
-public class Menu {
+public class Menu extends JPanel {
 
     private class Toast {
         private int time;
@@ -112,11 +113,11 @@ public class Menu {
         }
     }
 
-    enum Mode {
+    public enum Mode {
         MAIN, LEVEL, DIFFICULTY, HIGHSCORES, OPTIONS, GRAPHICS, AUDIO, CONTROLS, CREDITS, QUIT, PAUSE, SURE
     }
 
-    enum Text {
+    public enum Text {
         BACK,
         TITLE, NEW_GAME, CONTINUE, HIGHSCORES, OPTIONS, CREDITS, QUIT,
         LEVEL, FIRST,
@@ -193,7 +194,7 @@ public class Menu {
         game.addKeyListener(input);
     }
 
-    void update() {
+    public void update() {
         focused = null;
         Point press = input.getPress(), click = input.getClick();
 
@@ -344,7 +345,7 @@ public class Menu {
 
     private void drawToasts(Graphics g) {
         for (Toast t : toasts) {
-            if (System.currentTimeMillis() - t.startingTime > t.time)
+            if (System.currentTimeMillis() - t.startTime > t.time)
                 toasts.remove(t);
             else {
                 Point p = t.p;
@@ -405,7 +406,7 @@ public class Menu {
         return img;
     }
 
-    void pause() {
+    public void pause() {
         game.addKeyListener(input);
         modeStack.push(Mode.PAUSE);
     }
@@ -415,7 +416,7 @@ public class Menu {
         game.resume();
     }
 
-    static void initModeStack() {
+    public static void initModeStack() {
         modeStack.push(Mode.MAIN);
     }
 
@@ -454,7 +455,7 @@ public class Menu {
         resolutions.put(Text._240, new Dimension(400, 240));
     }
 
-    static void initHashSets() {
+    public static void initHashSets() {
         goBacks.add(Text.BACK);
         goBacks.add(Text.NO);
 
@@ -649,10 +650,9 @@ public class Menu {
 
         strings.put(Text.AUTHORS, "CREDITS");
         strings.put(Text.CODE, "CODE");
-        strings.put(Text.M_Z, "MAKSYMILIAN ZAWARTKO");
+        strings.put(Text.M_Z, "Stefan Birsan");
         strings.put(Text.REST, "REST");
         strings.put(Text.INTERNET, "FROM INTERNET");
-        strings.put(Text.PAGE, "github.com/maxymilianz/Ray-casting-game");
 
         strings.put(Text.PAUSE, "PAUSE");
         strings.put(Text.RESTART, "RESTART LEVEL");

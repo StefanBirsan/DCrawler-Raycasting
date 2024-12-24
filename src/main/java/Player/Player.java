@@ -2,13 +2,17 @@ package Player;
 
 import javafx.geometry.Point2D;
 
+import Game.Equipment.Weapon;
+
 import java.util.LinkedList;
 
 public class Player extends Character  {
     private double defaultFov = 66 * Math.PI / 180, aimFov = 45 * Math.PI / 180, fov = defaultFov, deltaFov, zDir = 1;
 
-    public Player(double speed, double sprintSpeed, int health, int mana, int stamina, int maxHealth, int maxMana, int maxStamina, Point2D pos, Point2D dir) {
-        super(speed, sprintSpeed, health, mana, stamina, maxHealth, maxMana, maxStamina, pos, dir);
+    public Player(double speed, double sprintSpeed, int health, int mana, int stamina, int maxHealth, int maxMana, int maxStamina, Point2D pos, Point2D dir, LinkedList<Weapon.Weapons> weapons) {
+        super(speed, sprintSpeed, health, mana, stamina, maxHealth, maxMana, maxStamina, pos, dir, weapons);
+        this.weapons.add(Weapon.Weapons.S_SWORD);
+        weapon = weapons.getFirst();
     }
 
     public void update() {

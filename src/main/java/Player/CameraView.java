@@ -1,5 +1,6 @@
 package Player;
 
+import NPCs.NPC;
 import javafx.geometry.Point2D;
 import javafx.util.Pair;
 
@@ -19,10 +20,11 @@ public class CameraView extends JFrame{
     private BufferedImage rendered;
 
     private Player  player;
+    private LinkedList<NPC> NPCs;
 
     private int[][] map;
 
-    public CameraView(int resX, int resY, int renderResX, int renderResY, int[][] map) {
+    public CameraView(int resX, int resY, int renderResX, int renderResY, Player player, int[][] map, LinkedList<NPC> NPCs) {
         this.resX = resX;
         this.resY = resY;
         this.renderResX = renderResX;
@@ -32,11 +34,16 @@ public class CameraView extends JFrame{
         wallHeight = renderResY;
         halfResY = renderResY / 2;
         rendered = new BufferedImage(renderResX, renderResY, BufferedImage.TYPE_INT_RGB);
+        this.player = player;
         this.map = map;
+        this.NPCs = NPCs;
     }
 
     public void drawGraphics(Graphics g) {
         render(g);
+        drawWeapon(g);
+        drawViewfinder(g);
+        drawHealthAndManabar(g);
     }
 
     private void render(Graphics g) {
@@ -108,6 +115,52 @@ public class CameraView extends JFrame{
         BufferedImage viewfinder = Textures.getSprites().get(Sprite.Sprites.VIEWFINDER).getImage();
         int w = (int) (viewfinder.getWidth() * ratioX), h = (int) (viewfinder.getHeight() * ratioY);
         g.drawImage(viewfinder, (resX - w) / 2, (resY - h) / 2, w, h, null);
+    }
+
+    private void drawHealthAndManabar(Graphics g) {
+        BufferedImage healthbar = Textures.getSprites().get(Textures.getHealthbar().get(nrOfBarSprites * hero.getHealth() / hero.getMaxHealth())).getImage();
+        BufferedImage manabar = Textures.getSprites().get(Textures.getManabar().get(nrOfBarSprites * hero.getMana() / hero.getMaxMana())).getImage();
+        int w = (int) (healthbar.getWidth() * ratioX), h = (int) (healthbar.getHeight() * ratioY), marginX = (int) (barsXMargin * ratioX), marginY = (int) (barsYMargin * ratioY);
+        g.drawImage(healthbar, marginX, resY - h + marginY, w, h, null);
+        g.drawImage(manabar, resX - w - marginX, resY - h + marginY, w, h, null);
+    }
+
+    private void drawWeapon(Graphics g) {
+        BufferedImage img = Textures.getSprites().get(Textures.getWeapons().get(hero.getWeapon())).getImage();
+        if (img != null) {
+            int w = img.getWidth(), h = img.getHeight(), x = (int) (resX * .256), y = (int) (resY * .456);
+            AffineTransform at = new AffineTransform();
+            at.translate(w / 2, h / 2);
+            at.rotate(hero.getWeaponAngle(), w / 5, h / 2);
+            AffineTransformOp op = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
+            g.drawImage(op.filter(img, null), x, y, (int) (w * ratioX * weaponSizeConst), (int) (h * ratioY * weaponSizeConst), null);
+        }
+    }
+
+    private LinkedList<Pair<NPC, Integer>> checkNPCs() {
+        LinkedList<Pair<NPC, Integer>> NPCsToDraw = new LinkedList<>();
+
+        for (NPC i : NPCs) {
+            Point2D vec = i.getPos().subtract(player.getPos()), dir = player.getDir(), zero = new Point2D(1, 0), perp = new Point2D(-vec.getY(), vec.getX());
+            double vecAngle = vec.angle(zero), dirAngle = dir.angle(zero);
+            vecAngle = vec.getY() < 0 ? 360 - vecAngle : vecAngle;
+            dirAngle = dir.getY() < 0 ? 360 - dirAngle : dirAngle;
+            perp = perp.multiply(1 / vec.magnitude() * Textures.getSprites().get(Textures.getNPCs().get(i.getType()).get(i.getPosition())).getImage().getWidth() /
+                    Textures.getSprites().get(Textures.getBlocks().get(1)).getImage().getWidth());
+            vec = vec.add(perp.multiply(vecAngle < dirAngle ? 1 : -1));
+
+            if (vec.angle(dir) < player.getFov() * 90 / Math.PI)
+                NPCsToDraw.add(new Pair<>(i, 2137));
+        }
+
+        NPCsToDraw.sort(new Comparator<Pair<NPC, Integer>>() {
+            @Override
+            public int compare(Pair<NPC, Integer> o1, Pair<NPC, Integer> o2) {
+                return o1.getValue() < o2.getValue() ? -1 : 1;
+            }
+        });
+
+        return NPCsToDraw;
     }
 
 }

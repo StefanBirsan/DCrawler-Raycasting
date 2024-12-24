@@ -1,5 +1,6 @@
 package Player;
 
+import Game.Equipment.Weapon;
 import Game.GameEngine;
 import Player.Helper.RenderVect;
 import javafx.geometry.Point2D;
@@ -14,12 +15,15 @@ public class Character {
     int health, mana, stamina, maxHealth, maxMana, maxStamina;
 
     Point2D pos, dir, zero = new Point2D(0, 0), movingDir = zero, lastMovingDir = zero;
+    Weapon.Weapons weapon;
 
     static int[][] map;
 
     private HashSet<Point2D> dirs = new HashSet<>();
+    LinkedList<Weapon.Weapons> weapons = new LinkedList<>();
 
-    public Character(double speed, double sprintSpeed, int health, int mana, int stamina, int maxHealth, int maxMana, int maxStamina, Point2D pos, Point2D dir) {
+    public Character(double speed, double sprintSpeed, int health, int mana, int stamina, int maxHealth, int maxMana, int maxStamina, Point2D pos, Point2D dir,
+                     LinkedList<Weapon.Weapons> weapons) {
         this.speed = speed;
         this.sprintSpeed = sprintSpeed;
         currentSpeed = speed;
@@ -31,6 +35,7 @@ public class Character {
         this.maxStamina = maxStamina;
         this.pos = pos;
         this.dir = normalize(dir);
+        this.weapons = weapons;
     }
 
     void update() {
@@ -42,6 +47,25 @@ public class Character {
 
         currentSpeed = speed;
         dirs = new HashSet<>();
+    }
+
+    private void updateWeaponAngle() {
+        if (deltaWeaponAngle > 0) {
+            if (weaponAngle < 0)
+                weaponAngle += deltaWeaponAngle;
+            else {
+                weaponAngle = 0;
+                deltaWeaponAngle = 0;
+            }
+        }
+        else {
+            if (weaponAngle > attackingWeaponAngle)
+                weaponAngle += deltaWeaponAngle;
+            else {
+                weaponAngle = attackingWeaponAngle;
+                deltaWeaponAngle *= -1;
+            }
+        }
     }
 
     private Point2D normalize(Point2D vec) {
@@ -165,7 +189,7 @@ public class Character {
         return diffX * diffX + diffY * diffY;
     }
 
-    int block(Point2D vec, Point2D collisionPoint) {
+    public int block(Point2D vec, Point2D collisionPoint) {
         double tempY = collisionPoint.getY(), tempX = collisionPoint.getX();
         int y = (int) tempY - (vec.getY() < 0 && tempY == Math.round(tempY) ? 1 : 0), x = (int) tempX - (vec.getX() < 0 && tempX == Math.round(tempX) ? 1 : 0);
         return y >= 0 && y < map.length && x >= 0 && x < map[0].length ? map[y][x] : 1;
