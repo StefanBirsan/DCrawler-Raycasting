@@ -1,19 +1,24 @@
 package Player;
 
 import NPCs.NPC;
+import Game.Texture.Textures;
+import Game.Texture.Sprite;
 import javafx.geometry.Point2D;
 import javafx.util.Pair;
 
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.Graphics;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-public class CameraView extends JFrame{
+public class CameraView extends JPanel {
 
-    private final int wallHeight, floorSize = 4, ceilingSize = 4, halfResY, visibility = 8, fogRGB = Color.black.getRGB();
+    private final int wallHeight, floorSize = 4, ceilingSize = 4, halfResY, visibility = 8, fogRGB = Color.black.getRGB(), nrOfBarSprites = 8;
     private int resX, resY, renderResX, renderResY, weaponSizeConst = 2, barsXMargin = 11, barsYMargin = 23;
     private double ratioX, ratioY;
 
@@ -39,7 +44,7 @@ public class CameraView extends JFrame{
         this.NPCs = NPCs;
     }
 
-    public void drawGraphics(Graphics g) {
+    public void paint(Graphics g) {
         render(g);
         drawWeapon(g);
         drawViewfinder(g);
@@ -57,8 +62,6 @@ public class CameraView extends JFrame{
 
             Pair<Point2D, Boolean> collisionInfo = player.collisionInfo(vec).getFirst().getKey();
             Point2D collisionPoint = collisionInfo.getKey();
-
-            //TODO: Add Textures when you wake up
 
             BufferedImage img = Textures.getSprites().get(Textures.getBlocks().get(player.block(vec, collisionPoint))).getImage();
             int x = (int) (((collisionInfo.getValue() ? collisionPoint.getY() : collisionPoint.getX()) % 1) * img.getWidth()), j = 0,
@@ -118,20 +121,20 @@ public class CameraView extends JFrame{
     }
 
     private void drawHealthAndManabar(Graphics g) {
-        BufferedImage healthbar = Textures.getSprites().get(Textures.getHealthbar().get(nrOfBarSprites * hero.getHealth() / hero.getMaxHealth())).getImage();
-        BufferedImage manabar = Textures.getSprites().get(Textures.getManabar().get(nrOfBarSprites * hero.getMana() / hero.getMaxMana())).getImage();
+        BufferedImage healthbar = Textures.getSprites().get(Textures.getHealthbar().get(nrOfBarSprites * player.getHealth() / player.getMaxHealth())).getImage();
+        BufferedImage manabar = Textures.getSprites().get(Textures.getManabar().get(nrOfBarSprites * player.getMana() / player.getMaxMana())).getImage();
         int w = (int) (healthbar.getWidth() * ratioX), h = (int) (healthbar.getHeight() * ratioY), marginX = (int) (barsXMargin * ratioX), marginY = (int) (barsYMargin * ratioY);
         g.drawImage(healthbar, marginX, resY - h + marginY, w, h, null);
         g.drawImage(manabar, resX - w - marginX, resY - h + marginY, w, h, null);
     }
 
     private void drawWeapon(Graphics g) {
-        BufferedImage img = Textures.getSprites().get(Textures.getWeapons().get(hero.getWeapon())).getImage();
+        BufferedImage img = Textures.getSprites().get(Textures.getWeapons().get(player.getWeapon())).getImage();
         if (img != null) {
             int w = img.getWidth(), h = img.getHeight(), x = (int) (resX * .256), y = (int) (resY * .456);
             AffineTransform at = new AffineTransform();
             at.translate(w / 2, h / 2);
-            at.rotate(hero.getWeaponAngle(), w / 5, h / 2);
+            at.rotate(player.getWeaponAngle(), w / 5, h / 2);
             AffineTransformOp op = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
             g.drawImage(op.filter(img, null), x, y, (int) (w * ratioX * weaponSizeConst), (int) (h * ratioY * weaponSizeConst), null);
         }

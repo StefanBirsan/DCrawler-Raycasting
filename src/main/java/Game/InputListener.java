@@ -1,7 +1,6 @@
 package Game;
 
 import Player.Player;
-import Game.GameEngine;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -10,7 +9,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Hashtable;
 
-public class InputListener {
+public class InputListener implements MouseListener, KeyListener {
 
     private long time = System.currentTimeMillis();
     private double sensitivity = 0.003;

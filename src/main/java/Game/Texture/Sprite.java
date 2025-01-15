@@ -4,7 +4,7 @@ import java.awt.image.BufferedImage;
 
 public class Sprite {
 
-    enum Sprites {
+    public enum Sprites {
         S_SWORD,
         VIEWFINDER,
         BULLET, L_BULLET, R_BULLET, SHOT,
@@ -19,7 +19,7 @@ public class Sprite {
         MENU_BG
     }
 
-    enum View {
+    public enum View {
         FRONT, BACK, LEFT, RIGHT
     }
 

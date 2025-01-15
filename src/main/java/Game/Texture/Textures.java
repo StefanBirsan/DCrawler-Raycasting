@@ -4,8 +4,11 @@ import Game.Equipment.Weapon;
 import Game.Equipment.RangedWeapons;
 import NPCs.NPC;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.util.Hashtable;
+import javax.imageio.ImageIO;
 
 public class Textures {
 
@@ -26,7 +29,6 @@ public class Textures {
             initBlocks();
             initFloors();
             initCeilings();
-            initNPCs();
             initWeapons();
             initHealthAndManabar();
         }
@@ -36,50 +38,22 @@ public class Textures {
     }
 
     private static void initHealthAndManabar() {
-        healthbar.put(0, Sprite.Sprites.H0);
-        healthbar.put(1, Sprite.Sprites.H1);
-        healthbar.put(2, Sprite.Sprites.H2);
-        healthbar.put(3, Sprite.Sprites.H3);
-        healthbar.put(4, Sprite.Sprites.H4);
-        healthbar.put(5, Sprite.Sprites.H5);
-        healthbar.put(6, Sprite.Sprites.H6);
-        healthbar.put(7, Sprite.Sprites.H7);
-        healthbar.put(8, Sprite.Sprites.H8);
+        healthbar.put(8, Sprite.Sprites.H0);
 
-        manabar.put(0, Sprite.Sprites.M0);
-        manabar.put(1, Sprite.Sprites.M1);
-        manabar.put(2, Sprite.Sprites.M2);
-        manabar.put(3, Sprite.Sprites.M3);
-        manabar.put(4, Sprite.Sprites.M4);
-        manabar.put(5, Sprite.Sprites.M5);
-        manabar.put(6, Sprite.Sprites.M6);
-        manabar.put(7, Sprite.Sprites.M7);
-        manabar.put(8, Sprite.Sprites.M8);
+        manabar.put(8, Sprite.Sprites.M0);
     }
 
     private static void initWeapons() {
         weapons.put(Weapon.Weapons.S_SWORD, Sprite.Sprites.S_SWORD);
     }
 
-    private static void initNPCs() {
-        Hashtable<NPC.Position, Sprite.Sprites> tempBaldric = new Hashtable<>();
-        tempBaldric.put(NPC.Position.STANDING, Sprite.Sprites.B_STANDING);
-        tempBaldric.put(NPC.Position.FALLING, Sprite.Sprites.B_FALLING);
-        tempBaldric.put(NPC.Position.FALLED, Sprite.Sprites.B_FALLED);
-        tempBaldric.put(NPC.Position.CASTING, Sprite.Sprites.B_CASTING);
-        tempBaldric.put(NPC.Position.WALKING, Sprite.Sprites.B_WALKING);
-
-        NPCs.put(NPC.NPCs.BALDRIC, tempBaldric);
-    }
 
     private static void initCeilings() {
-        for (int i = 0; i < 7; i++)
-            ceilings.put(i, Sprite.Sprites.CEILING0);
+        ceilings.put(0, Sprite.Sprites.CEILING0);
     }
 
     private static void initFloors() {
-        for (int i = 0; i < 7; i++)
-            floors.put(i, Sprite.Sprites.FLOOR0);
+        floors.put(0, Sprite.Sprites.FLOOR0);
     }
 
     private static void initBlocks() {
@@ -108,10 +82,6 @@ public class Textures {
         return NPCs;
     }
 
-    public static Hashtable<RangedWeapons.Bullets, Sprite.Sprites> getBullets() {
-        return bullets;
-    }
-
     public static Hashtable<Integer, Sprite.Sprites> getCeilings() {
         return ceilings;
     }
@@ -129,6 +99,27 @@ public class Textures {
     }
 
     private static void initSprites() throws IOException {
-        //TODO: Get sprites from files
+        sprites.put(Sprite.Sprites.S_SWORD, new Sprite(new BufferedImage[]{ImageIO.read(new File("res/weapons/sword2.png"))}));
+
+        sprites.put(Sprite.Sprites.VIEWFINDER, new Sprite(new BufferedImage[]{ImageIO.read(new File("res/viewfinder.png"))}));
+
+        sprites.put(Sprite.Sprites.BG1, new Sprite(new BufferedImage[]{ImageIO.read(new File("res/walls/wall5.jpeg"))}));
+        sprites.put(Sprite.Sprites.BG2, new Sprite(new BufferedImage[]{ImageIO.read(new File("res/walls/wall4.jpeg"))}));
+        sprites.put(Sprite.Sprites.BG3, new Sprite(new BufferedImage[]{ImageIO.read(new File("res/walls/wall3.jpeg"))}));
+        sprites.put(Sprite.Sprites.BG4, new Sprite(new BufferedImage[]{ImageIO.read(new File("res/walls/wall2.jpeg"))}));
+        sprites.put(Sprite.Sprites.BG5, new Sprite(new BufferedImage[]{ImageIO.read(new File("res/walls/wall1.jpeg"))}));
+        sprites.put(Sprite.Sprites.BG6, new Sprite(new BufferedImage[]{ImageIO.read(new File("res/walls/wall0.jpeg"))}));
+
+        sprites.put(Sprite.Sprites.FLOOR0, new Sprite(new BufferedImage[]{ImageIO.read(new File("./res/floors/floor.jpeg"))}));
+
+        sprites.put(Sprite.Sprites.CEILING0, new Sprite(new BufferedImage[]{ImageIO.read(new File("res/ceilings/0m.jpeg"))}));
+
+
+        sprites.put(Sprite.Sprites.H0, new Sprite(new BufferedImage[]{ImageIO.read(new File("res/healthbar/0h.png"))}));
+
+        sprites.put(Sprite.Sprites.M0, new Sprite(new BufferedImage[]{ImageIO.read(new File("res/manabar/IGOTNOMANA.png"))}));
+
+        sprites.put(Sprite.Sprites.MENU_BG, new Sprite(new BufferedImage[]{ImageIO.read(new File("res/dungeonbg.jpg"))}));
     }
+
 }

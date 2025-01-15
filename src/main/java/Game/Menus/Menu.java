@@ -2,8 +2,10 @@ package Game.Menus;
 
 import Game.GameEngine;
 import Game.Menus.SettingHelper.Settings;
-import javafx.util.Pair;
+import Game.Texture.Sprite;
+import Game.Texture.Textures;
 
+import javafx.util.Pair;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -24,24 +26,24 @@ public class Menu extends JPanel {
 
     private class Toast {
         private int time;
-        private long startTime;
+        private long startingTime;
 
         private Point p;
 
         private Text t;
 
-        public Toast(long startTime, Text t) {
+        public Toast(long startingTime, Text t) {
             time = 3000;
-            this.startTime = startTime;
+            this.startingTime = startingTime;
             this.t = t;
 
             BufferedImage img = images.get(t);
-            p = new Point((resX - img.getWidth()) / 2, resY - img.getHeight() - 100);
+            p = new Point((resX - img.getWidth()) / 2, resY - img.getHeight() - 100);       // 100 is arbitrary
         }
 
-        public Toast(int time, long startTime, Point p, Text t) {
+        public Toast(int time, long startingTime, Point p, Text t) {
             this.time = time;
-            this.startTime = startTime;
+            this.startingTime = startingTime;
             this.p = p;
             this.t = t;
         }
@@ -114,12 +116,12 @@ public class Menu extends JPanel {
     }
 
     public enum Mode {
-        MAIN, LEVEL, DIFFICULTY, HIGHSCORES, OPTIONS, GRAPHICS, AUDIO, CONTROLS, CREDITS, QUIT, PAUSE, SURE
+        MAIN, LEVEL, DIFFICULTY, HIGHSCORES, OPTIONS, GRAPHICS, AUDIO, CONTROLS, QUIT, PAUSE, SURE
     }
 
-    public enum Text {
+    enum Text {
         BACK,
-        TITLE, NEW_GAME, CONTINUE, HIGHSCORES, OPTIONS, CREDITS, QUIT,
+        TITLE, NEW_GAME, CONTINUE, HIGHSCORES, OPTIONS, QUIT,
         LEVEL, FIRST,
         DIFFICULTY, EASY, MEDIUM, HARD, EXTREME,
         SETTINGS, GRAPHICS, AUDIO, CONTROLS, APPLY, CANCEL,
@@ -136,7 +138,7 @@ public class Menu extends JPanel {
     private int resX, resY;
 
     private BufferedImage cursor;
-    private Color primaryColor = Color.WHITE, focusedColor = Color.YELLOW;
+    private Color primaryColor = Color.decode("#c7c0bd"), focusedColor = Color.decode("#a33208");
 
     private GameEngine game;
     private Input input = new Input();
@@ -190,7 +192,7 @@ public class Menu extends JPanel {
             e.printStackTrace();
         }
 
-        game.addMouseListener(input);
+        addMouseListener(input);
         game.addKeyListener(input);
     }
 
@@ -345,7 +347,7 @@ public class Menu extends JPanel {
 
     private void drawToasts(Graphics g) {
         for (Toast t : toasts) {
-            if (System.currentTimeMillis() - t.startTime > t.time)
+            if (System.currentTimeMillis() - t.startingTime > t.time)
                 toasts.remove(t);
             else {
                 Point p = t.p;
@@ -483,7 +485,6 @@ public class Menu extends JPanel {
         modes.put(Text.NEW_GAME, Mode.LEVEL);
         modes.put(Text.HIGHSCORES, Mode.HIGHSCORES);
         modes.put(Text.OPTIONS, Mode.OPTIONS);
-        modes.put(Text.CREDITS, Mode.CREDITS);
         modes.put(Text.QUIT, Mode.QUIT);
 
         modes.put(Text.FIRST, Mode.DIFFICULTY);
@@ -497,7 +498,7 @@ public class Menu extends JPanel {
     }
 
     private void initCursor() throws IOException {
-        cursor = ImageIO.read(new File("res/cursors/0.png"));
+        cursor = ImageIO.read(new File("res/cursors/0c.png"));
     }
 
     private void initToasts(FontMetrics fm) {
@@ -507,17 +508,16 @@ public class Menu extends JPanel {
         }
     }
 
-    private void initTexts() throws Exception {     /* in this method, I decided to repeat some code in case for it to work faster
-            (otherwise I would have to check if mode != CREDITS in for loop) */
+    private void initTexts() throws Exception {
         final float ratioY = (float) resY / 600, ratioX = (float) resX / 1280;
         final int titleY = (int) (40 * ratioY), textY = (int) (200 * ratioY), deltaTextY = (int) (60 * ratioY), endingX = resX * 890 / 1920;        // 890 and 1920 are arbitrary
         final float fontSize = 40 * Math.min(ratioY, ratioX), titleFontSize = 100 * Math.min(ratioY, ratioX), toastFontSize = 30 * Math.min(ratioY, ratioX);
 
-        Font font = Font.createFont(Font.TRUETYPE_FONT, new File("res/UnrealT.ttf"));
+        Font font = Font.createFont(Font.TRUETYPE_FONT, new File("res/DragonHunter.otf"));
         Graphics2D g2d = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).createGraphics();
         LinkedList<Pair<Mode, Pair<Text, Text[]>>> list = new LinkedList<>();
 
-        list.add(new Pair<>(Mode.MAIN, new Pair<>(Text.TITLE, new Text[]{Text.NEW_GAME, Text.CONTINUE, Text.HIGHSCORES, Text.OPTIONS, Text.CREDITS, Text.QUIT})));
+        list.add(new Pair<>(Mode.MAIN, new Pair<>(Text.TITLE, new Text[]{Text.NEW_GAME, Text.CONTINUE, Text.HIGHSCORES, Text.OPTIONS, Text.QUIT})));
         list.add(new Pair<>(Mode.LEVEL, new Pair<>(Text.LEVEL, new Text[]{Text.FIRST, Text.BACK})));
         list.add(new Pair<>(Mode.DIFFICULTY, new Pair<>(Text.DIFFICULTY, new Text[]{Text.EASY, Text.MEDIUM, Text.HARD, Text.EXTREME, Text.BACK})));
         list.add(new Pair<>(Mode.QUIT, new Pair<>(Text.EXIT, new Text[]{Text.YES, Text.NO})));
@@ -558,44 +558,8 @@ public class Menu extends JPanel {
         g2d.setFont(font.deriveFont(titleFontSize));
         FontMetrics fm = g2d.getFontMetrics();
         LinkedList<Pair<Text, Point>> temp = new LinkedList<>();
-        BufferedImage img = stringToImage(strings.get(Text.AUTHORS), fm, focusedColor);
 
-        images.put(Text.AUTHORS, img);
-        focusedImages.put(Text.AUTHORS, img);
-        temp.add(new Pair<>(Text.AUTHORS, new Point((resX - img.getWidth()) / 2, titleY)));
-
-        int y = 0;
         g2d.setFont(font.deriveFont(fontSize));
-        fm = g2d.getFontMetrics();
-        Text[] credits = new Text[]{Text.CODE, Text.M_Z, Text.REST, Text.INTERNET};
-
-        for (int i = 0; i < credits.length; i++) {
-            y = textY + deltaTextY * (i / 2);
-            Text text = credits[i];
-            img = stringToImage(strings.get(text), fm, primaryColor);
-
-            images.put(text, img);
-            focusedImages.put(text, img);
-            temp.add(new Pair<>(text, new Point(i % 2 == 0 ? endingX - img.getWidth() : resX - endingX, y)));
-        }
-
-        y += deltaTextY;
-        img = stringToImage(strings.get(Text.BACK), fm, primaryColor);
-
-        images.put(Text.BACK, img);
-        focusedImages.put(Text.BACK, stringToImage(strings.get(Text.BACK), fm, focusedColor));
-        temp.add(new Pair<>(Text.BACK, new Point(endingX - img.getWidth(), y)));
-
-        y += deltaTextY;
-        img = stringToImage(strings.get(Text.PAGE), fm, primaryColor);
-
-        images.put(Text.PAGE, img);
-        focusedImages.put(Text.PAGE, stringToImage(strings.get(Text.PAGE), fm, focusedColor));
-        temp.add(new Pair<>(Text.PAGE, new Point((resX - img.getWidth()) / 2, y)));
-
-        texts.put(Mode.CREDITS, temp);
-
-        g2d.setFont(font.deriveFont(fontSize));        //graphics options
         fm = g2d.getFontMetrics();
         Text[] tempArray = new Text[]{Text.ON, Text.OFF};
 
@@ -627,12 +591,11 @@ public class Menu extends JPanel {
     private void initStrings() {
         strings.put(Text.BACK, "BACK");
 
-        strings.put(Text.TITLE, "DUNGEON RAIDER");
+        strings.put(Text.TITLE, "Dungeon Crawl");
         strings.put(Text.NEW_GAME, "NEW GAME");
         strings.put(Text.CONTINUE, "CONTINUE");
         strings.put(Text.HIGHSCORES, "HIGHSCORES");
         strings.put(Text.OPTIONS, "OPTIONS");
-        strings.put(Text.CREDITS, "CREDITS");
         strings.put(Text.QUIT, "QUIT");
 
         strings.put(Text.LEVEL, "SELECT LEVEL");
@@ -647,12 +610,6 @@ public class Menu extends JPanel {
         strings.put(Text.EXIT, "EXIT GAME?");
         strings.put(Text.YES, "YES");
         strings.put(Text.NO, "NO");
-
-        strings.put(Text.AUTHORS, "CREDITS");
-        strings.put(Text.CODE, "CODE");
-        strings.put(Text.M_Z, "Stefan Birsan");
-        strings.put(Text.REST, "REST");
-        strings.put(Text.INTERNET, "FROM INTERNET");
 
         strings.put(Text.PAUSE, "PAUSE");
         strings.put(Text.RESTART, "RESTART LEVEL");

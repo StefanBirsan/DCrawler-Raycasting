@@ -15,9 +15,8 @@ import javafx.geometry.Point2D;
 
 import java.awt.*;
 import javax.swing.*;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
+import javax.swing.JFrame;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.Random;
@@ -70,8 +69,7 @@ public class GameEngine extends JFrame  {
                 new Point(0, 0), "blank"));
 
         menu = new Menu(settings.isFullscreen(), this, settings, settingsSerialization);
-        getContentPane().add(menu); //TODO: debyg later if needed
-
+        getContentPane().add(menu);
         if (settings.isFullscreen()) {
             setUndecorated(true);
             setExtendedState(MAXIMIZED_BOTH);
@@ -121,7 +119,7 @@ public class GameEngine extends JFrame  {
                 {1,1,1,1,1,1,1,4,4,4,4,4,4,4,4}});
     }
 
-    void applySettings(Menu.Mode mode) {
+    public void applySettings(Menu.Mode mode) {
         if (mode == Menu.Mode.GRAPHICS) {
             if (settings.isFullscreen()) {
                 Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
@@ -165,11 +163,11 @@ public class GameEngine extends JFrame  {
         state = State.PAUSE;
         getContentPane().remove(camera);
         menu.pause();
-        getContentPane().add((Component) menu);
+        getContentPane().add(menu);
         getContentPane().validate();
     }
 
-    void resume() {
+    public void resume() {
         Audio.stop(Audio.Sound.MENU);
         Audio.resetAndStart(Audio.Sound.BG);
         state = State.GAME;
@@ -195,8 +193,8 @@ public class GameEngine extends JFrame  {
                 new Point2D(0, 1), new LinkedList<>());
 
         input = new InputListener(this, player);
-        addMouseListener((MouseListener) input);
-        addKeyListener((KeyListener) input);
+        addMouseListener(input);
+        addKeyListener(input);
 
         camera = new CameraView(resX, resY, renderedResX, renderedResY, player, map, NPCs);
 

@@ -29,13 +29,20 @@ public class Player extends Character  {
 
     private void updateFov() {
         if (deltaFov < 0) {
-            fov = Math.max(fov + deltaFov, aimFov);
-        } else {
-            fov = Math.min(fov + deltaFov, defaultFov);
+            if (fov > aimFov)
+                fov += deltaFov;
+            else {
+                fov = aimFov;
+                deltaFov = 0;
+            }
         }
-
-        if (fov == aimFov || fov == defaultFov) {
-            deltaFov = 0;
+        else {
+            if (fov < defaultFov)
+                fov += deltaFov;
+            else {
+                fov = defaultFov;
+                deltaFov = 0;
+            }
         }
     }
 

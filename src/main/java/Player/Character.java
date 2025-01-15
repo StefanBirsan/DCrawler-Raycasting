@@ -2,6 +2,7 @@ package Player;
 
 import Game.Equipment.Weapon;
 import Game.GameEngine;
+import Game.Audio;
 import Player.Helper.RenderVect;
 import javafx.geometry.Point2D;
 import javafx.util.Pair;
@@ -44,6 +45,18 @@ public class Character {
             movingDir = movingDir.add(p);
         movingDir = normalize(movingDir);
         go();
+
+        if (lastMovingDir.equals(zero) && !movingDir.equals(zero))
+            Audio.start(Audio.Sound.STEPS);
+        else if (movingDir.equals(zero))
+            Audio.stop(Audio.Sound.STEPS);
+
+        if (stamina < maxStamina) {
+            stamina++;
+        }
+
+        if (deltaWeaponAngle != 0)
+            updateWeaponAngle();
 
         currentSpeed = speed;
         dirs = new HashSet<>();
@@ -95,6 +108,14 @@ public class Character {
 
     public int getMana() {
         return mana;
+    }
+
+    public Weapon.Weapons getWeapon() {
+        return weapon;
+    }
+
+    public double getWeaponAngle() {
+        return weaponAngle;
     }
 
     public int getMaxMana() {
