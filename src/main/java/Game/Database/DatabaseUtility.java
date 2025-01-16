@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DatabaseUtility {
-    private static final String URL = "jdbc:mysql://localhost:3306/players";
+    private static final String URL = "jdbc:mysql://localhost:3306/dungeoncrawler";
     private static final String USER = "root";
     private static final String PASSWORD = "";
 

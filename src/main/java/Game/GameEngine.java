@@ -20,8 +20,16 @@ import javax.swing.JFrame;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.Random;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+
 
 public class GameEngine extends JFrame  {
+
+    public boolean getPlayer() {
+        return false;
+    }
 
     public enum State {
         MENU, GAME, PAUSE
@@ -38,6 +46,7 @@ public class GameEngine extends JFrame  {
     private Serialization settingsSerialization = new Serialization("settings.ser", Settings.class);
     private Settings settings;
     private LinkedList<NPC> NPCs = new LinkedList<>();
+    private static final int PORT = 12345;
 
     private LinkedList<int[][]> maps = new LinkedList<>();
 
@@ -157,7 +166,7 @@ public class GameEngine extends JFrame  {
             applySettings(mode);
     }
 
-    void pause() {
+    public void pause() {
         Audio.stop(Audio.Sound.BG);
         Audio.resetAndStart(Audio.Sound.MENU);
         state = State.PAUSE;
@@ -256,6 +265,22 @@ public class GameEngine extends JFrame  {
 
             NPCs.add(new NPC(0.03, 0.06, 10, 10, 10, 10, 10, 10, new Point2D(x + 0.5, y + 0.5),
                     new Point2D(0, 1), new LinkedList<>(), NPC.Attitude.EVIL, NPC.NPCs.BALDRIC));
+        }
+    }
+
+    public void startServer() {
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+            System.out.println("Server started on port " + PORT);
+
+            while (true) {
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("New client connected");
+
+                ClientHandler clientHandler = new ClientHandler(clientSocket);
+                new Thread(clientHandler).start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
