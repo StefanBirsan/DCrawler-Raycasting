@@ -4,6 +4,7 @@ import Game.GameEngine;
 import Game.Menus.SettingHelper.Settings;
 import Game.Texture.Sprite;
 import Game.Texture.Textures;
+import Game.Database.DatabaseUtility;
 
 import javafx.util.Pair;
 import javax.imageio.ImageIO;
@@ -17,10 +18,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.LinkedList;
-import java.util.Stack;
+import java.util.*;
 
 public class Menu extends JPanel {
 
@@ -116,13 +114,14 @@ public class Menu extends JPanel {
     }
 
     public enum Mode {
-        MAIN, LEVEL, DIFFICULTY, HIGHSCORES, OPTIONS, GRAPHICS, AUDIO, CONTROLS, QUIT, PAUSE, SURE
+        MAIN, LEVEL, DIFFICULTY, HIGHSCORES, LOGIN, RETRIEVE, OPTIONS, GRAPHICS, AUDIO, CONTROLS, QUIT, PAUSE, SURE, ACCOUNT
     }
 
     enum Text {
         BACK,
-        TITLE, NEW_GAME, CONTINUE, HIGHSCORES, OPTIONS, QUIT,
-        LEVEL, FIRST,
+        TITLE, NEW_GAME, CONTINUE, HIGHSCORES, OPTIONS, ACCOUNT, QUIT,
+        LEVEL, FIRST, LOGIN, RETRIEVE,
+        ACCOUNT_SCREEN,
         DIFFICULTY, EASY, MEDIUM, HARD, EXTREME,
         SETTINGS, GRAPHICS, AUDIO, CONTROLS, APPLY, CANCEL,
         GRAPHICS_SETTINGS, FULLSCREEN, RES, RENDER_RES,
@@ -132,6 +131,9 @@ public class Menu extends JPanel {
         PAUSE, RESTART, MENU, RESUME,
         LINK, RESTART_APPLY, FULLSCREEN_RES,
         SURE,
+        LOGINSCREEN,
+        USERNAME, PASSWORD, EMAIL, RETRIEVE_STATS,
+        RETRIEVE_NAME
     }
 
     private boolean fullscreen;
@@ -145,6 +147,9 @@ public class Menu extends JPanel {
     private Settings s;
     private Serialization serialization;
     private Text focused = null, last;
+    private JTextField textField;
+    private JTextField usernameField;
+    private JPasswordField passwordField;
 
     private static HashSet<Text> goBacks = new HashSet<>();
     private static HashSet<Mode> settings = new HashSet<>();
@@ -158,6 +163,7 @@ public class Menu extends JPanel {
     private Hashtable<Text, Dimension> resolutions = new Hashtable<>();
     private Hashtable<Text, Integer> difficulties = new Hashtable<>();
     private Hashtable<Text, Integer> levels = new Hashtable<>();
+    private Hashtable<Text, Integer> acounts = new Hashtable<>();
     private Hashtable<Text, BufferedImage> images = new Hashtable<>();
     private Hashtable<Text, BufferedImage> focusedImages = new Hashtable<>();
     private Hashtable<Text, Mode> modes = new Hashtable<>();
@@ -168,7 +174,7 @@ public class Menu extends JPanel {
     private Hashtable<Text, Text[]> possibilities = new Hashtable<>();
     private Hashtable<Mode, LinkedList<Pair<Text, Point>>> texts = new Hashtable<>();
 
-    public Menu(boolean fullscreen, GameEngine game, Settings s, Serialization serialization) {
+    public Menu(boolean fullscreen, GameEngine game, Settings s, Serialization serialization ) {
         this.fullscreen = fullscreen;
         this.resX = s.getResX();
         this.resY = s.getResY();
@@ -176,9 +182,27 @@ public class Menu extends JPanel {
         this.s = s;
         this.serialization = serialization;
 
+        setLayout(null);
+
+        textField = new JTextField();
+        textField.setBounds(100, 100, 200, 30);
+        textField.setVisible(false);
+        add(textField);
+
+        usernameField = new JTextField();
+        usernameField.setBounds(100, 150, 200, 30);
+        usernameField.setVisible(false);
+        add(usernameField);
+
+        passwordField = new JPasswordField();
+        passwordField.setBounds(100, 200, 200, 30);
+        passwordField.setVisible(false);
+        add(passwordField);
+
         initStrings();
         initModes();
         initLevels();
+        initAccounts();
         initDifficulties();
         initResolutions();
         initIndices();
@@ -245,8 +269,6 @@ public class Menu extends JPanel {
             apply();
         else if (clicked == Text.CANCEL)
             cancel();
-        else if (clicked == Text.PAGE)
-            openWebpage(strings.get(Text.PAGE));
         else if (clicked == Text.YES) {
             Mode mode = modeStack.peek();
 
@@ -261,19 +283,31 @@ public class Menu extends JPanel {
         }
         else if (clicked == Text.RESUME)
             resume();
-    }
 
-    private void openWebpage(String s) {
-        if (!Desktop.isDesktopSupported()) {
-            toasts.add(new Toast(System.currentTimeMillis(), Text.LINK));
-            return;
-        }
-
-        try {
-            Desktop.getDesktop().browse(new URI("http://" + s));
-        }
-        catch (Exception e) {
-            e.printStackTrace();
+        if (clicked == Text.LOGIN) {
+            showLoginFields();
+        } else if (clicked == Text.RETRIEVE_NAME) {
+            String userInput = getTextFieldInput();
+            System.out.println("User input: " + userInput);
+            Map<String, Object> player = DatabaseUtility.retrieveByUsername(userInput);
+            if (player != null) {
+                System.out.println("Player Details:");
+                System.out.println("ID: " + player.get("PlayerID"));
+                System.out.println("Name: " + player.get("PlayerName"));
+                System.out.println("Level: " + player.get("Level"));
+                System.out.println("Experience: " + player.get("Experience"));
+                System.out.println("Password: " + player.get("Password"));
+            } else {
+                System.out.println("Player not found.");
+            }
+            hideTextField();
+        } else if (clicked == Text.LOGINSCREEN) {
+            String username = usernameField.getText();
+            String password = new String(passwordField.getPassword());
+            System.out.println("Username: " + username);
+            System.out.println("Password: " + password);
+            DatabaseUtility.saveUser(username, password);
+            hideLoginFields();
         }
     }
 
@@ -481,13 +515,22 @@ public class Menu extends JPanel {
         levels.put(Text.FIRST, 0);
     }
 
+    private void initAccounts() {
+        acounts.put(Text.LOGIN, 0);
+        acounts.put(Text.RETRIEVE, 1);
+        acounts.put(Text.BACK, 2);
+    }
+
     private void initModes() {
         modes.put(Text.NEW_GAME, Mode.LEVEL);
-        modes.put(Text.HIGHSCORES, Mode.HIGHSCORES);
         modes.put(Text.OPTIONS, Mode.OPTIONS);
         modes.put(Text.QUIT, Mode.QUIT);
 
         modes.put(Text.FIRST, Mode.DIFFICULTY);
+        modes.put(Text.HIGHSCORES, Mode.ACCOUNT);
+
+        modes.put(Text.RETRIEVE, Mode.RETRIEVE);
+        modes.put(Text.LOGIN, Mode.LOGIN);
 
         modes.put(Text.GRAPHICS, Mode.GRAPHICS);
         modes.put(Text.AUDIO, Mode.AUDIO);
@@ -519,12 +562,16 @@ public class Menu extends JPanel {
 
         list.add(new Pair<>(Mode.MAIN, new Pair<>(Text.TITLE, new Text[]{Text.NEW_GAME, Text.CONTINUE, Text.HIGHSCORES, Text.OPTIONS, Text.QUIT})));
         list.add(new Pair<>(Mode.LEVEL, new Pair<>(Text.LEVEL, new Text[]{Text.FIRST, Text.BACK})));
+        list.add(new Pair<>(Mode.LOGIN, new Pair<>(Text.LOGINSCREEN, new Text[]{Text.USERNAME, Text.PASSWORD, Text.LOGIN, Text.BACK})));
         list.add(new Pair<>(Mode.DIFFICULTY, new Pair<>(Text.DIFFICULTY, new Text[]{Text.EASY, Text.MEDIUM, Text.HARD, Text.EXTREME, Text.BACK})));
+        list.add(new Pair<>(Mode.ACCOUNT, new Pair<>(Text.ACCOUNT_SCREEN, new Text[]{Text.LOGIN, Text.RETRIEVE, Text.BACK})));
         list.add(new Pair<>(Mode.QUIT, new Pair<>(Text.EXIT, new Text[]{Text.YES, Text.NO})));
+        list.add(new Pair<>(Mode.RETRIEVE, new Pair<>(Text.RETRIEVE_STATS, new Text[]{Text.RETRIEVE_NAME, Text.BACK})));
         list.add(new Pair<>(Mode.PAUSE, new Pair<>(Text.PAUSE, new Text[]{Text.RESTART, Text.MENU, Text.OPTIONS, Text.RESUME, Text.QUIT})));
         list.add(new Pair<>(Mode.OPTIONS, new Pair<>(Text.SETTINGS, new Text[]{Text.GRAPHICS, Text.AUDIO, Text.CONTROLS, Text.BACK})));
         list.add(new Pair<>(Mode.GRAPHICS, new Pair<>(Text.GRAPHICS_SETTINGS, new Text[]{Text.FULLSCREEN, Text.RES, Text.RENDER_RES, Text.APPLY, Text.CANCEL})));
         list.add(new Pair<>(Mode.SURE, new Pair<>(Text.SURE, new Text[]{Text.YES, Text.NO})));
+
 
         for (Pair<Mode, Pair<Text, Text[]>> p : list) {
             g2d.setFont(font.deriveFont(titleFontSize));
@@ -601,6 +648,16 @@ public class Menu extends JPanel {
         strings.put(Text.LEVEL, "SELECT LEVEL");
         strings.put(Text.FIRST, "1ST LEVEL");
 
+        strings.put(Text.LOGIN, "LOGIN");
+        strings.put(Text.LOGINSCREEN, "CREATE/LOGIN");
+        strings.put(Text.USERNAME, "USERNAME:");
+        strings.put(Text.PASSWORD, "PASSWORD:");
+
+        strings.put(Text.ACCOUNT_SCREEN, "ACCOUNT");
+        strings.put(Text.RETRIEVE, "        RETRIEVE STATS");
+        strings.put(Text.RETRIEVE_STATS, "RETREIVE PLAYER STATS");
+        strings.put(Text.RETRIEVE_NAME, "ENTER A USER:");
+
         strings.put(Text.DIFFICULTY, "SELECT DIFFICULTY");
         strings.put(Text.EASY, "EASY");
         strings.put(Text.MEDIUM, "MEDIUM");
@@ -655,5 +712,33 @@ public class Menu extends JPanel {
 
     public boolean isFullscreen() {
         return fullscreen;
+    }
+
+    private void showTextField() {
+        textField.setVisible(true);
+        textField.requestFocus();
+        repaint();
+    }
+
+    private void hideTextField() {
+        textField.setVisible(false);
+        repaint();
+    }
+
+    private String getTextFieldInput() {
+        return textField.getText();
+    }
+
+    private void showLoginFields() {
+        usernameField.setVisible(true);
+        passwordField.setVisible(true);
+        usernameField.requestFocus();
+        repaint();
+    }
+
+    private void hideLoginFields() {
+        usernameField.setVisible(false);
+        passwordField.setVisible(false);
+        repaint();
     }
 }
